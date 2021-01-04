@@ -4,13 +4,20 @@
 
 
 # Add the Arch ZFS repository to /etc/pacman.conf
-echo "
+echo "adding repo archzfs"
+pacman -Sy archlinux-keyring --noconfirm &>/dev/null
+pacman-key --populate archlinux &>/dev/null
+pacman-key --recv-keys F75D9D76 --keyserver keyserver.ubuntu.com &>/dev/null
+pacman-key --lsign-key F75D9D76 &>/dev/null
+cat>>/etc/pacman.conf<<"EOF"
 [archzfs]
-Server = http://archzfs.com/$repo/x86_64
-" >> /etc/pacman.conf
+Server = http://archzfs.com/archzfs/x86_64
+Server = http://mirror.sum7.eu/archlinux/archzfs/x86_64
+Server = https://mirror.biocrafting.net/archlinux/archzfs/archzfs/x86_64
+EOF
+pacman -Sy &>/dev/null
 
 # sign its key
-pacman-key -r 5E1ABF240EE7A126 && pacman-key --lsign-key 5E1ABF240EE7A126
 
 # install zfs-linux
 pacman -Syyu
@@ -19,10 +26,9 @@ pacman -Syyu
 systemctl mask tmp.mount
 
 ## Install as normal ##
-nano /etc/pacman.d/mirrorlist
 
 # set locale, uncomment en_US.UTF-8 UTF-8
-nano /etc/locale.gen
+echo "LANG=es_MX.UTF-8" >> /etc/locale.gen
 # generate the new locales
 locale-gen
 
