@@ -23,7 +23,6 @@ pacman -Sy &>/dev/null
 pacman -Syyu
 
 # For /tmp, mask (disable) systemd's automatic tmpfs-backed /tmp
-systemctl mask tmp.mount
 
 ## Install as normal ##
 
@@ -40,11 +39,13 @@ ln -s  /usr/share/zoneinfo/Mexico/General /etc/localtime
 # set the time standard to UTC
 hwclock --systohc --utc
 
+echo "KEYMAP=la-latin1" >> /etc/vconsole.conf
+
 ## Bootloader ##
 # re-generate the initramfs image
-mkinitcpio -p linux
 # If intel cpu, set ucode as the first initrd in the bootloader
 pacman -S intel-ucode
+mkinitcpio -P
 # Install systemd-boot to wherever esp mounted
 bootctl --path=/boot install
 echo "
@@ -53,7 +54,7 @@ title    Arch Linux
 linux    /vmlinuz-linux
 initrd    /intel-ucode.img
 initrd    /initramfs-linux.img
-options   zfs=vault/ROOT/default rw
+options   zfs=zroot/ROOT/default rw
 
 " >> /loader/entries/Arch.conf
 
@@ -87,9 +88,14 @@ wherisfish= $(which fish)
 useradd -m -G wheel -s $wherisfish vertecedoc
 passwd vertecedoc
 EDITOR=nvim
-pacman -S openssh git lynx
+pacman -S openssh git lynx grub efibootmgr
 systemctl enable sshd
 
+grub-install --target=x86_64-efi --efi-directory=esp --bootloader-id=GRUB
+
+grub-mkconfig -o /boot/grub/grub.cfg
+
+ZPOOL_VDEV_NAME_PATH=1 grub-mkconfig -o /boot/grub/grub.cfg
 # Done!
 exit
 
