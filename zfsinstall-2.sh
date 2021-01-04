@@ -1,19 +1,19 @@
 #!/bin/bash
 
 # Run in chroot
-# arch-chroot /mnt /bin/bash
+
 
 # Add the Arch ZFS repository to /etc/pacman.conf
-nano /etc/pacman.conf
-# [archzfs]
-# Server = http://archzfs.com/$repo/x86_64
+echo "
+[archzfs]
+Server = http://archzfs.com/$repo/x86_64
+" >> /etc/pacman.conf
 
 # sign its key
 pacman-key -r 5E1ABF240EE7A126 && pacman-key --lsign-key 5E1ABF240EE7A126
 
 # install zfs-linux
 pacman -Syyu
-pacman -S  zfs-linux-git
 
 # For /tmp, mask (disable) systemd's automatic tmpfs-backed /tmp
 systemctl mask tmp.mount
@@ -26,12 +26,11 @@ nano /etc/locale.gen
 # generate the new locales
 locale-gen
 
-# set locale, LANG refers to the first column of locale
-nano /etc/locale.conf
-# LANG=en_US.UTF-8
+# set locale, LANG refers to the first column ofnano /etc/locale.conf
+echo "LANG=es_MX.UTF-8" >> /etc/locale.conf
 
 # timezone
-ln -s  /usr/share/zoneinfo/Canada/Pacific /etc/localtime
+ln -s  /usr/share/zoneinfo/Mexico/General /etc/localtime
 # set the time standard to UTC
 hwclock --systohc --utc
 
@@ -42,33 +41,34 @@ mkinitcpio -p linux
 pacman -S intel-ucode
 # Install systemd-boot to wherever esp mounted
 bootctl --path=/boot install
-
+echo "
 # Bootloader entry
-# title    Arch Linux
-# linux    /vmlinuz-linux
-# initrd    /intel-ucode.img
-# initrd    /initramfs-linux.img
-# options   zfs=vault/ROOT/default rw
-nano /loader/entries/Arch.conf
+title    Arch Linux
+linux    /vmlinuz-linux
+initrd    /intel-ucode.img
+initrd    /initramfs-linux.img
+options   zfs=vault/ROOT/default rw
+
+" >> /loader/entries/Arch.conf
 
 ## Configure the network ##
 # Set the hostname to your liking:
-nano /etc/hostname
-
+echo "zfsDePrueva" >> /etc/hostname
+echo "
 ## /etc/hosts: static lookup table for host names
 ## <ip-address>   <hostname.domain.org>   <hostname>
-# 127.0.0.1       localhost.localdomain   localhost
-# ::1             localhost.localdomain   localhost
-# 192.168.0.2     Archon.localdomain      Archon
-nano /etc/hosts
+ 127.0.0.1       localhost.localdomain   localhost
+ ::1             localhost.localdomain   localhost
+ 127.0.1.1	  Archon.localdomain      zfsDePrueva
+" >> /etc/hosts
 
 
 # get nic
 ip link
 # enable internet
 systemctl enable dhcpcd@eno1.service
-
-# root pass
+systemctl enable NetworkManager.service
+echo "root pass"
 passwd
 
 # Set either shutdown hook or this
@@ -76,24 +76,24 @@ systemctl enable mkinitcpio-generate-shutdown-ramfs.service
 
 ## Install Done, Customize ##
 # Make a user
-pacman -S zsh sudo
-useradd -m -G wheel -s /usr/bin/zsh john
-passwd john
-EDITOR=nano visudo
-nano /etc/pacman.conf
-pacman -S openssh
+pacman -S fish 
+wherisfish= $(which fish)
+useradd -m -G wheel -s $wherisfish vertecedoc
+passwd vertecedoc
+EDITOR=nvim
+pacman -S openssh git lynx
 systemctl enable sshd
-nano /etc/ssh/sshd_config
 
 # Done!
 exit
 
 umount /mnt/boot
-umount /mnt/home                                                                                                                 umount /mnt/tmp
+umount /mnt/home                                                                                                              
+umount /mnt/tmp
 umount /mnt/usr
 umount /mnt/var
 
 zfs umount -a
-zpool export vault
+zpool export zroot
 
 ## Reboot!
